@@ -1,10 +1,12 @@
 import requests as r # HTTP запросы
 import matplotlib.pyplot as p # гистограммы
 import statistics
+import time
 from collections import defaultdict
+import progressbar
+
 url = 'https://api.hh.ru/vacancies' # ссылка для работы с вакансиями (из API)
 topic = ("machine learning", "data science", "big data", "data analytics") # список тем
-topic_data = [] # средняя ЗП
 money = ("80к-", "80-120к", "120-150к", "150-200к", "200-300к", "300к+") # список диапазонов ЗП
 money_data = [0, 0, 0, 0, 0, 0] # количество вакансий
 val = {"KZT": 0.1788, "BYR": 29.3039, "EUR": 70.8099, "USD": 57.5043, "UAH": 2.196, "RUR": 1} # курс валют
@@ -15,7 +17,12 @@ d = 0
 for i in topic: # по темам словаря
     n = 0 # счетчик вакансий с указанной ЗП
     all_zp = 0 # средняя ЗП по 1 теме
-    for j in range(100): # по страницам
+    par = {'text': i} # параметры запроса
+    pages = int(r.get(url, par).json()['pages']) # выполнение запроса
+    bprog = progressbar.ProgressBar(max_value = pages)
+    cprog = 0
+    for j in range(pages): # по страницам
+        cprog += 1
         par = {'text': i, 'page': j} # параметры запроса
         while d == 0:
             try:
@@ -66,19 +73,29 @@ for i in topic: # по темам словаря
             else: # иначе
                 if 'area' in k:
                     zps[k["area"]["name"]].append(zp)
+        bprog.update(cprog)
 
+bprog.finish()
 for i in zps:
     zps[i] = statistics.median(zps[i])
 
-# figure, bars = p.subplots(2) # фигура с 2 элементами
-# p.xticks(rotation = 90)
-# bars[0].bar(money, money_data) # 2 гистограмма
-# bars[1].bar(zps.keys(), zps.values(), width = 0.1) # 1 гистограмма
-# p.show() # отображение гистограмм
-
+    
+p.Figure()
+thismanager = p.get_current_fig_manager()
+thismanager.window.wm_iconbitmap('favicon.ico')
+p.xlabel("Диапазон ЗП в рублях")
+p.ylabel("Количество вакансий") 
+p.title("Распределение количества вакансий по диапазонам ЗП")
+p.gcf().canvas.set_window_title('Распределение количества вакансий по диапазонам ЗП')
 p.barh(money, money_data)
 p.show()
-# p.xticks(rotation = 90)
-p.gcf().subplots_adjust(left = 0.3)
+
+thismanager = p.get_current_fig_manager()
+thismanager.window.wm_iconbitmap('favicon.ico')
+p.xlabel("Средняя ЗП в рублях")
+p.ylabel("Название региона") 
+p.title("Средние ЗП по регионам")
+p.gcf().subplots_adjust(left = 0.2)
+p.gcf().canvas.set_window_title('Средние ЗП по регионам')
 p.barh(list(zps.keys()), list(zps.values()))
 p.show()
