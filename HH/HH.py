@@ -10,13 +10,20 @@ money_data = [0, 0, 0, 0, 0, 0] # количество вакансий
 val = {"KZT": 0.1788, "BYR": 29.3039, "EUR": 70.8099, "USD": 57.5043, "UAH": 2.196, "RUR": 1} # курс валют
 zps = defaultdict(list)
 dead = 0 # индикатор ложной ЗП
+d = 0
 
 for i in topic: # по темам словаря
     n = 0 # счетчик вакансий с указанной ЗП
     all_zp = 0 # средняя ЗП по 1 теме
-    for j in range(3): # по страницам
+    for j in range(100): # по страницам
         par = {'text': i, 'page': j} # параметры запроса
-        m = r.get(url, par).json()['items'] # выполнение запроса, декодирование json и переход к вакансиям
+        while d == 0:
+            try:
+                m = r.get(url, par).json()['items'] # выполнение запроса, декодирование json и переход к вакансиям
+                d = 1
+            except:
+                print("САЙТ УПАЛ")
+        d = 0
 
         for k in m: # переберает вакансии текущей страницы
             if k['salary'] == None: # есть ли общие данные по зарплате
@@ -57,7 +64,8 @@ for i in topic: # по темам словаря
             if dead: # если ложная ЗП
                 dead = 0 # обнуление индикатора
             else: # иначе
-                zps[k["name"]].append(zp)
+                if 'area' in k:
+                    zps[k["area"]["name"]].append(zp)
 
 for i in zps:
     zps[i] = statistics.median(zps[i])
@@ -70,7 +78,7 @@ for i in zps:
 
 p.barh(money, money_data)
 p.show()
-p.xticks(rotation = 90)
-p.gcf().subplots_adjust(left = 0.4)
+# p.xticks(rotation = 90)
+p.gcf().subplots_adjust(left = 0.3)
 p.barh(list(zps.keys()), list(zps.values()))
 p.show()
