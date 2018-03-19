@@ -99,3 +99,4 @@ p.gcf().subplots_adjust(left = 0.2)
 p.gcf().canvas.set_window_title('Средние ЗП по регионам')
 p.barh(list(zps.keys()), list(zps.values()))
 p.show()
+# изменение
